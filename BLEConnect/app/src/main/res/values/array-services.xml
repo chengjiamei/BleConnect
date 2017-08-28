@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="services_uuids">
+        <!-- start from 0x1800 -->
+        <item>Generic Access</item>
+        <item>Generic Attribute</item>
+        <item>Immediate Alert</item>
+        <item>Link Loss</item>
+        <item>Tx Power</item>
+        <item>Current Time Service</item>
+        <item>Reference Time Update Service</item>
+        <item>Next DST Change Service</item>
+        <item>Glucose</item>
+        <item>Health Thermometer</item>
+        <item>Device Information</item>
+        <item>Unkown Service</item>
+        <item>Unkown Service</item>
+        <item>Heart Rate</item>
+        <item>Phone Alert Status Service</item>
+        <item>Battery Service</item>
+        <item>Blood Pressure</item>
+        <item>Alert Notification Service</item>
+        <item>Human Interface Device</item>
+        <item>Scan Parameters</item>
+        <item>Running Speed and Cadence</item>
+        <item>Automation IO</item>
+        <item>Cycling Speed and Cadence</item>
+        <item>Cycling Power</item>
+        <item>Location and Navigation</item>
+        <item>Environmental Sensing</item>
+        <item>Body Composition</item>
+        <item>User Data</item>
+        <item>Weight Scale</item>
+        <item>Bond Management Service</item>
+        <item>Continuous Glucose Monitoring</item>
+        <item>Internet Protocol Support Service</item>
+        <item>Indoor Positioning</item>
+        <item>Pulse Oximeter Service</item>
+        <item>HTTP Proxy</item>
+        <item>Transport Discovery</item>
+        <item>Object Transfer Service</item>
+        <item>Fitness Machine</item>
+        <item>Mesh Provisioning Service</item>
+        <item>Mesh Proxy Service</item>
+
+    </string-array>
+</resources>

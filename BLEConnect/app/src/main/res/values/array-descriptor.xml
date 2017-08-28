@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="descriptor_uuids">
+        <item>Characteristic Extended Properties</item>
+        <item>Characteristic User Description</item>
+        <item>Client Characteristic Configuration</item>
+        <item>Server Characteristic Configuration</item>
+        <item>Characteristic Presentation Format</item>
+        <item>Characteristic Aggregate Format</item>
+        <item>Valid Range</item>
+        <item>External Report Reference</item>
+        <item>Report Reference</item>
+        <item>Number of Digitals</item>
+        <item>Value Trigger Setting</item>
+        <item>Environmental Sensing Configuration</item>
+        <item>Environmental Sensing Measurement</item>
+        <item>Environmental Sensing Trigger Setting</item>
+        <item>Time Trigger Setting</item>
+    </string-array>
+</resources>

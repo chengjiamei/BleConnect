@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:descendantFocusability="beforeDescendants"
+    android:layout_height="45dp">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:src="@mipmap/ic_delete"
+            android:layout_alignParentRight="true"
+            android:id="@+id/item_main_img_clear_name"
+            android:clickable="true"
+            android:layout_margin="10dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp" />
+        <EditText
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/item_main_img_clear_name"
+            android:id="@+id/item_main_filter_name"
+            android:hint="@string/filter_name"
+            android:layout_alignParentLeft="true"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/et_bg_shape"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/item_main_img_clear_address"
+            android:clickable="true"
+            android:src="@mipmap/ic_delete"
+            android:layout_alignParentRight="true"
+            android:layout_margin="10dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp" />
+        <EditText
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/item_main_img_clear_address"
+            android:id="@+id/item_main_filter_address"
+            android:hint="@string/filter_name"
+            android:layout_alignParentLeft="true"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/et_bg_shape"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+</LinearLayout>

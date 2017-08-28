@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="characteristic_uuids">
+        <!-- start form 2A00 -->
+        <item>Device Name</item>
+        <item>Appearance</item>
+        <item>Peripheral Privacy Flag</item>
+        <item>Reconnection Address</item>
+        <item>Peripheral Preferred Connection Parameters</item>
+        <item>Service Changed</item>
+        <item>Alert Level</item>
+        <item>Tx Power Level</item>
+        <item>Date Time</item>
+        <item>Day of Week</item>
+        <item>Day Date Time</item>
+        <item>Exact Time 100</item>
+        <item>Exact Time 256</item>
+        <item>DST Offset</item>
+        <item>Time Zone</item>
+        <item>Local Time Information</item>
+        <item>Secondary Time Zone</item>
+        <item>Time with DST</item>
+        <item>Time Accuracy</item>
+        <item>Time Source</item>
+        <item>Reference Time Information</item>
+        <item>Time Broadcast</item>
+        <item>Time Update Control Point</item>
+        <item>Time Update State</item>
+        <item>Glucose Measurement</item>
+        <item>Battery Level</item>
+        <item>Battery Power State</item>
+        <item>Battery Level State</item>
+        <item>Temperature Measurement</item>
+        <item>Temperature Type</item>
+        <item>Intermediate Temperature</item>
+        <item>Temperature Celsius</item>
+        <item>Temperature Fahrenheit</item>
+        <item>Measurement Interval</item>
+        <item>Boot Keyboard Input Report</item>
+        <item>System ID</item>
+        <item>Model Number String</item>
+        <item>Serial Number String</item>
+        <item>Firmware Revision String</item>
+        <item>Hardware Revision String</item>
+        <item>Software Revision String</item>
+        <item>Manufacturer Name String</item>
+        <item>IEEE 11073-20601 Regulatory Certification Data List</item>
+        <item>Current Time</item>
+        <item>Magnetic Declination</item>
+        <item>Position 2D</item>
+        <item>Position 3D</item>
+        <item>Scan Refresh</item>
+        <item>Boot Keyboard Output Report</item>
+        <item>Boot Mouse Input Report</item>
+        <item>Glucose Measurement Context</item>
+        <item>Blood Pressure Measurement</item>
+        <item>Intermediate Cuff Pressure</item>
+        <item>Heart Rate Measurement</item>
+        <item>Body Sensor Location</item>
+        <item>Heart Rate Control Point</item>
+        <item>Removable</item>
+        <item>Service Required</item>
+        <item>Scientific Temperature Celsius</item>
+        <item>String</item>
+        <item>Network Availability</item>
+        <item>Alert Status</item>
+        <item>Ringer Control point</item>
+        <item>Ringer Setting</item>
+        <item>Alert Category ID Bit Mask</item>
+        <item>Alert Category ID</item>
+        <item>Alert Notification Control Point</item>
+        <item>Unread Alert Status</item>
+        <item>New Alert</item>
+        <item>Supported New Alert Category</item>
+        <item>Supported Unread Alert Category</item>
+        <item>Blood Pressure Feature</item>
+        <item>HID Information</item>
+        <item>Report Map</item>
+        <item>HID Control Point</item>
+        <item>Report</item>
+        <item>Protocol Mode</item>
+        <item>Scan Interval Window</item>
+        <item>PnP ID</item>
+        <item>Glucose Feature</item>
+        <item>Record Access Control Point</item>
+        <item>RSC Measurement</item>
+        <item>RSC Feature</item>
+        <item>SC Control Point</item>
+        <item>Digital</item>
+        <item>Digital Output</item>
+        <item>Analog</item>
+        <item>Analog Output</item>
+        <item>Aggregate</item>
+        <item>CSC Measurement</item>
+        <item>CSC Feature</item>
+        <item>Sensor Location</item>
+        <item>PLX Spot-Check Measurement</item>
+        <item>PLX Continuous Measurement Characteristic</item>
+        <item>PLX Features</item>
+        <item>Pulse Oximetry Pulsatile Event Characteristic</item>
+        <item>Pulse Oximetry Control Point</item>
+        <item>Cycling Power Measurement</item>
+        <item>Cycling Power Vector</item>
+        <item>Cycling Power Feature</item>
+        <item>Cycling Power Feature</item>
+        <item>Cycling Power Control Point</item>
+        <item>Cycling Power Control Point</item>
+        <item>Location and Speed Characteristic</item>
+        <item>Navigation</item>
+        <item>Position Quality</item>
+        <item>LN Feature</item>
+        <item>LN Control Point</item>
+        <item>Elevation</item>
+        <item>Pressure</item>
+        <item>Temperature</item>
+        <item>Humidity</item>
+        <item>True Wind Speed</item>
+        <item>True Wind Direction</item>
+        <item>Apparent Wind Speed</item>
+        <item>Apparent Wind Direction</item>
+        <item>Gust Factor</item>
+        <item>Pollen Concentration</item>
+        <item>UV Index</item>
+        <item>Irradiance</item>
+        <item>Rainfall</item>
+        <item>Wind Chill</item>
+        <item>Heat Index</item>
+        <item>Dew Point</item>
+        <item>Descriptor Value Changed</item>
+        <item>Aerobic Heart Rate Lower Limit</item>
+        <item>Aerobic Threshold</item>
+        <item>Age</item>
+        <item>Anaerobic Heart Rate Lower Limit</item>
+        <item>Anaerobic Heart Rate Upper Limit</item>
+        <item>Anaerobic Threshold</item>
+        <item>Aerobic Heart Rate Upper Limit</item>
+        <item>Date of Birth</item>
+        <item>Date of Threshold Assessment</item>
+        <item>Email Address</item>
+        <item>Fat Burn Heart Rate Lower Limit</item>
+        <item>Fat Burn Heart Rate Upper Limit</item>
+        <item>First Name</item>
+        <item>Five Zone Heart Rate Limits</item>
+        <item>Gender</item>
+        <item>Heart Rate Max</item>
+        <item>Height</item>
+        <item>Hip Circumference</item>
+        <item>Last Name</item>
+        <item>Maximum Recommended Heart Rate</item>
+        <item>Resting Heart Rate</item>
+        <item>Sport Type for Aerobic and Anaerobic Thresholds</item>
+        <item>Three Zone Heart Rate Limits</item>
+        <item>Two Zone Heart Rate Limit</item>
+        <item>VO2 Max</item>
+        <item>Waist Circumference</item>
+        <item>Weight</item>
+        <item>Database Change Increment</item>
+        <item>User Index</item>
+        <item>Body Composition Feature</item>
+        <item>Body Composition Measurement</item>
+        <item>Weight Measurement</item>
+        <item>Weight Scale Feature</item>
+        <item>User Control Point</item>
+        <item>Magnetic Flux Density - 2D</item>
+        <item>Magnetic Flux Density - 3D</item>
+        <item>Language</item>
+        <item>Barometric Pressure Trend</item>
+        <item>Bond Management Control Point</item>
+        <item>Bond Management Features</item>
+        <item>Central Address Resolution</item>
+        <item>CGM Measurement</item>
+        <item>CGM Feature</item>
+        <item>CGM Status</item>
+        <item>CGM Session Start Time</item>
+        <item>CGM Session Run Time</item>
+        <item>CGM Specific Ops Control Point</item>
+        <item>Indoor Positioning Configuration</item>
+        <item>Latitude</item>
+        <item>Longitude</item>
+        <item>Local North Coordinate</item>
+        <item>Local East Coordinate</item>
+        <item>Floor Number</item>
+        <item>Altitude</item>
+        <item>Uncertainty</item>
+        <item>Location Name</item>
+        <item>URI</item>
+        <item>HTTP Headers</item>
+        <item>HTTP Status Code</item>
+        <item>HTTP Entity Body</item>
+        <item>HTTP Control Point</item>
+        <item>HTTPS Security</item>
+        <item>TDS Control Point</item>
+        <item>OTS Feature</item>
+        <item>Object Name</item>
+        <item>Object Type</item>
+        <item>Object Size</item>
+        <item>Object First-Created</item>
+        <item>Object Last-Modified</item>
+        <item>Object ID</item>
+        <item>Object Properties</item>
+        <item>Object Action Control Point</item>
+        <item>Object List Control Point</item>
+        <item>Object List Filter</item>
+        <item>Object Changed</item>
+        <item>Resolvable Private Address Only</item>
+        <item>Fitness Machine Feature</item>
+        <item>Treadmill Data</item>
+        <item>Cross Trainer Data</item>
+        <item>Step Climber Data</item>
+        <item>Stair Climber Data</item>
+        <item>Rower Data</item>
+        <item>Indoor Bike Data</item>
+        <item>Training Status</item>
+        <item>Supported Speed Range</item>
+        <item>Supported Inclination Range</item>
+        <item>Supported Resistance Level Range</item>
+        <item>Supported Heart Rate Range</item>
+        <item>Supported Power Range</item>
+        <item>Fitness Machine Control Point</item>
+        <item>Fitness Machine Status</item>
+    </string-array>
+</resources>
