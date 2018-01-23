@@ -6,8 +6,8 @@ import android.database.Cursor;
 import java.util.ArrayList;
 import java.util.List;
 
-import roc.cjm.bleconnect.services.entry.Command;
-import roc.cjm.bleconnect.services.entry.CommandList;
+import roc.cjm.bleconnect.activitys.normal.entry.Command;
+import roc.cjm.bleconnect.activitys.normal.entry.CommandList;
 
 /**
  * Created by Administrator on 2017/8/26.
@@ -48,8 +48,8 @@ public class DbCommand extends BaseDatabase {
         helper.update(TABLE_NAME, values, whereCause, whereArgs);
     }
 
-    public void delete(String whereCause, String[] whereArgs) {
-        helper.delete(TABLE_NAME, whereCause, whereArgs);
+    public int delete(String whereCause, String[] whereArgs) {
+        return helper.delete(TABLE_NAME, whereCause, whereArgs);
     }
 
     public Cursor query(String[] columns, String selection, String[] selectionArgs, String groupBy, String orderBy) {
@@ -119,6 +119,21 @@ public class DbCommand extends BaseDatabase {
 
     public void saveOrUpdate(CommandList commandList) {
         helper.replace(TABLE_NAME, null ,contentWithDevice(commandList));
+    }
+/*, String[] columns, String selection,
+    String[] selectionArgs, String orderby*/
+    public void update(CommandList commandList) {
+        Cursor cursor = helper.query(TABLE_NAME, null,COLUMN_TIME+"=?", new String[]{commandList.getCreateTime()+""}, null);
+        if(cursor != null && cursor.getCount()>0) {
+            helper.update(TABLE_NAME, contentWithDevice(commandList), COLUMN_TIME+"=?", new String[]{commandList.getCreateTime()+""});
+        }else {
+            helper.insert(TABLE_NAME, contentWithDevice(commandList));
+        }
+        if(cursor != null) {
+            cursor.close();
+        }
+        cursor = null;
+
     }
 
     private ContentValues contentWithDevice(CommandList commandList) {

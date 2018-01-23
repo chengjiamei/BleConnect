@@ -13,6 +13,13 @@ import java.util.TimeZone;
 @SuppressLint("SimpleDateFormat")
 public class DateUtil {
 
+	public int getActiveTimeZone () {
+		TimeZone timezone = TimeZone.getDefault();
+		int rawOffSet = timezone.getRawOffset();
+		int offset = rawOffSet / 3600000;
+		return offset;
+	}
+
 	public static String getTodayStr(String format){
 		Calendar calendar = Calendar.getInstance();
 		return dataToString(calendar.getTime(),format);

@@ -1,22 +1,27 @@
 package roc.cjm.bleconnect.services.commands;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import roc.cjm.bleconnect.services.entry.Command;
+import roc.cjm.bleconnect.activitys.normal.entry.Command;
 
 /**
  * Created by Administrator on 2017/8/24.
@@ -48,7 +53,46 @@ public class CmdController extends BaseController {
     @Override
     public void connect(BluetoothDevice device) {
         super.connect(device);
+        BluetoothDevice bd = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(device.getAddress());
+        if(mBluetoothGatt != null) {
+            synchronized (mLock) {
+                if(mBluetoothGatt != null) {
+                    mBluetoothGatt.close();
+                    mBluetoothGatt = null;
+                }
+            }
+        }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){
+            mBluetoothGatt = device.connectGatt(mContext, false, this, BluetoothDevice.TRANSPORT_LE);
+            return;
+        }
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP) {
+            mBluetoothGatt = connectGattApi21(device,mContext, false, this);
+            return;
+        }
         mBluetoothGatt = device.connectGatt(mContext, false, this);
+    }
+
+    private BluetoothGatt connectGattApi21(BluetoothDevice device,Context context,boolean autoconnect,BluetoothGattCallback callback1) {
+        try {
+            Method mod = device.getClass().getMethod("connectGatt", new Class[]{Context.class, Boolean.TYPE, BluetoothGattCallback.class, Integer.TYPE});
+            if(mod != null) {
+                return (BluetoothGatt) mod.invoke(device, new Object[]{context, autoconnect, callback1, Integer.valueOf(2)});
+            }
+
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return device.connectGatt(context, autoconnect, callback1);
     }
 
     public void disconnect() {
@@ -58,11 +102,16 @@ public class CmdController extends BaseController {
         mDevice = null;
     }
 
+    private Object mLock = new Object();
     private void close() {
         if(mBluetoothGatt != null) {
-            mBluetoothGatt.close();
+            synchronized (mLock) {
+                if (mBluetoothGatt != null) {
+                    mBluetoothGatt.close();
+                    mBluetoothGatt = null;
+                }
+            }
         }
-        mBluetoothGatt = null;
     }
 
     @Override
@@ -81,16 +130,22 @@ public class CmdController extends BaseController {
                 intent = new Intent(ACTION_DISCOVER_STATE);
                 intent.putExtra(EXTRA_DISCOVER_STATE, BaseController.STATE_DISCOVERING);
                 LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-                gatt.discoverServices();
+                commandHandler.sendEmptyMessageDelayed(0x01, 600);
             }else if(newState == BaseController.STATE_DISCONNECTED) {
                 discoverState = BaseController.STATE_DISCOVERED;
                 gatt.close();
                 close();
             }
         }else {
+
+            if(newState == BluetoothGatt.STATE_DISCONNECTED) {
+                gatt.close();
+                close();
+            }else {
+                disconnect();
+            }
             discoverState = BaseController.STATE_DISCOVERED;
-            gatt.close();
-            close();
+
         }
 
     }
@@ -132,6 +187,13 @@ public class CmdController extends BaseController {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            switch (msg.what) {
+                case 0x01:
+                    if(mBluetoothGatt != null) {
+                        mBluetoothGatt.discoverServices();
+                    }
+                    break;
+            }
         }
     };
 
@@ -150,18 +212,16 @@ public class CmdController extends BaseController {
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         super.onDescriptorRead(gatt, descriptor, status);
-        ArrayList<BluetoothGattService> listService = (ArrayList<BluetoothGattService>) gatt.getServices();
-        Intent intent = new Intent(BaseController.ACTION_SERVICE_DISCOVERED);
-        intent.putExtra(BaseController.EXTRA_SERVICE_LIST,listService);
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+
+    }
+
+    @Override
+    public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+        super.onDescriptorWrite(gatt, descriptor, status);
     }
 
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         super.onCharacteristicRead(gatt, characteristic, status);
-        ArrayList<BluetoothGattService> listService = (ArrayList<BluetoothGattService>) gatt.getServices();
-        Intent intent = new Intent(BaseController.ACTION_SERVICE_DISCOVERED);
-        intent.putExtra(BaseController.EXTRA_SERVICE_LIST,listService);
-        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:title="Save" android:id="@+id/menu_write_save" app:showAsAction="always"/><!--保存-->
+    <item android:title="Load" android:id="@+id/menu_write_load" app:showAsAction="always"/><!--加载历史修改记录-->
+    <item android:title="Save As" android:id="@+id/menu_write_saveas" app:showAsAction="never"/><!--另存为-->
+    <item android:title="Reload" android:id="@+id/menu_write_reload" app:showAsAction="never"/><!--恢复到本次修改前-->
+    <item android:title="Reset" android:id="@+id/menu_write_reset" app:showAsAction="never"/><!--恢复默认-->
+    <item android:title="Disconnect" android:id="@+id/menu_write_connect" app:showAsAction="never"/>
+    <item android:title="Clear Log" android:id="@+id/menu_write_cleaer" app:showAsAction="never"/><!--清除Log-->
+</menu>

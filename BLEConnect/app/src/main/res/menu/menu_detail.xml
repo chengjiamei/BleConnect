@@ -2,4 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:title="@string/connected" android:id="@+id/menu_detail_connect" app:showAsAction="always"   />
+    <item android:title="General" android:id="@+id/menu_detail_normal" app:showAsAction="never"/>
+    <item android:title="MC Profile" android:id="@+id/menu_detail_mcprofile" app:showAsAction="never"/>
 </menu>

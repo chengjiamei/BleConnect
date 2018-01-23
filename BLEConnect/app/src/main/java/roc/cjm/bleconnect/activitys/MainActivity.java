@@ -36,6 +36,7 @@ import android.widget.ExpandableListView;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,11 +56,12 @@ import roc.cjm.bleconnect.services.commands.BaseController;
 import roc.cjm.bleconnect.utils.DeviceConfiger;
 import roc.cjm.bleconnect.utils.Util;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener, AdapterView.OnItemClickListener{
+public class MainActivity extends BaseActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private String CONFIG = "btconnect";
     private String KEY_FILTER_NAME = "filter_name";
     private String KEY_FILTER_ADDRESS = "filter_address";
+    private String KEY_RSSI = "filter_rssi";
 
     private String TAG = "MainActivity";
     private BleService bleService = null;
@@ -73,6 +75,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private ScanResult scanResult;
     private String filter;
     private String filterName, filterAddress, tempAddress, tempName;
+    private int filterRssi, tempRssi;
     private ExpandableListView expandableListView;
     private MyExpandedAdapter expandedAdapter;
     private View splitView;
@@ -83,7 +86,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             Log.e(TAG, "onServiceConnected");
-            bleService = ((BleService.IBleService)iBinder).getBleService();
+            bleService = ((BleService.IBleService) iBinder).getBleService();
         }
 
         @Override
@@ -96,14 +99,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     public String getFilterString() {
         boolean nameEmpty = Util.isEmptyString(filterName);
         boolean addressEmpty = Util.isEmptyString(filterAddress);
-        if(!nameEmpty && !addressEmpty) {
-            return filterName +", "+ filterAddress;
+        if (!nameEmpty && !addressEmpty) {
+            return filterName + ", " + filterAddress+", Rssi >= "+filterRssi;
         }
-        if(!nameEmpty)
-            return filterName;
-        if(!addressEmpty)
-            return filterAddress;
-        return getString(R.string.no_filter);
+        if (!nameEmpty)
+            return filterName+", Rssi >= "+filterRssi;
+        if (!addressEmpty)
+            return filterAddress+", Rssi >= "+filterRssi;
+        return "Rssi >= "+filterRssi;
     }
 
     @Override
@@ -111,13 +114,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        preferences = getSharedPreferences(CONFIG , MODE_PRIVATE);
+
+        preferences = getSharedPreferences(CONFIG, MODE_PRIVATE);
         editor = preferences.edit();
 
-        filterAddress = preferences.getString(KEY_FILTER_ADDRESS,"");
+        filterAddress = preferences.getString(KEY_FILTER_ADDRESS, "");
         filterName = preferences.getString(KEY_FILTER_NAME, "");
+        filterRssi = preferences.getInt(KEY_RSSI, -80);
         tempAddress = filterAddress;
         tempName = filterName;
+        tempRssi = filterRssi;
         filter = getFilterString();
 
         View hv = new View(this);
@@ -135,17 +141,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         expandableListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                if(expandableListView.isGroupExpanded(groupPosition)) {
+                if (expandableListView.isGroupExpanded(groupPosition)) {
                     splitView.setVisibility(View.GONE);
                     filterName = tempName;
                     filterAddress = tempAddress;
+                    filterRssi = tempRssi;
                     filter = getFilterString();
                     expandedAdapter.notifyDataSetChanged();
                     editor.putString(KEY_FILTER_NAME, filterName);
                     editor.putString(KEY_FILTER_ADDRESS, filterAddress);
+                    editor.putInt(KEY_RSSI, filterRssi);
                     editor.commit();
                     scan();
-                }else {
+                } else {
                     splitView.setVisibility(View.VISIBLE);
                 }
                 return false;
@@ -153,13 +161,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         });
 
 
-
-
         listView = (ListView) findViewById(R.id.main_listview);
         listView.addHeaderView(hv, null, false);
         progressBar = (ProgressBar) findViewById(R.id.main_progress);
         progressBar.setVisibility(View.GONE);
-        bindService(new Intent(this, BleService.class), connection ,BIND_AUTO_CREATE);
+        bindService(new Intent(this, BleService.class), connection, BIND_AUTO_CREATE);
 
         EventBus.getDefault().register(this);
 
@@ -177,9 +183,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if(firstVisibleItem >= 0) {
+                if (firstVisibleItem >= 0) {
                     expandableListView.setVisibility(View.VISIBLE);
-                }else {
+                } else {
                     expandableListView.setVisibility(View.GONE);
                 }
             }
@@ -190,15 +196,27 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
-                if(bleService != null) {
+                if (bleService != null) {
                     bleService.disconnect();
                 }
             }
         });
+
+        verifyPermission();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         IntentFilter filter = new IntentFilter();
         filter.addAction(BaseController.ACTION_CONNECTION_STATE);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
-        verifyPermission();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -220,15 +238,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     public void scan() {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, getString(R.string.no_access_to_location), Toast.LENGTH_LONG).show();
-            return ;
+            return;
         }
-        if(adapter == null || !adapter.isEnabled()){
+        if (adapter == null || !adapter.isEnabled()) {
             Toast.makeText(this, getString(R.string.open_ble_first), Toast.LENGTH_LONG).show();
-            return ;
+            return;
         }
-        if(bleService != null) {
+        if (bleService != null) {
             listAddress.clear();
             listSelectState.clear();
             mapScanResult.clear();
@@ -242,15 +260,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     protected void onDestroy() {
         unbindService(connection);
         EventBus.getDefault().unregister(this);
-        if(dialog != null && dialog.isShowing()) {
+        if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
         }
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+
         super.onDestroy();
     }
 
     public void verifyPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
     }
 
     @Override
@@ -262,38 +280,38 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     public void addResult(ScanResult result) {
-        if(result != null) {
+        if (result != null) {
             String mac = result.getDevice().getAddress();
             ScanResult result1 = null;
-
-            boolean emptyName = Util.isEmptyString(filterName);
-            boolean emptyAddress = Util.isEmptyString(filterAddress);
-            if(!emptyAddress && !result.getDevice().getAddress().toLowerCase().contains(filterAddress.toLowerCase()) ) {
+            if(result.getRssi() < filterRssi ) {
                 return;
             }
-
-
-            if(listAddress.contains(mac)){
-                if(result.getDevice().getName() == null && result.getScanRecord().getDeviceName() == null) {
+            boolean emptyName = Util.isEmptyString(filterName);
+            boolean emptyAddress = Util.isEmptyString(filterAddress);
+            if (!emptyAddress && !result.getDevice().getAddress().toLowerCase().contains(filterAddress.toLowerCase())) {
+                return;
+            }
+            if (listAddress.contains(mac)) {
+                if (result.getDevice().getName() == null && result.getScanRecord().getDeviceName() == null) {
                     mapScanResult.get(mac).setRssi(result.getRssi());
-                }else {
+                } else {
                     String name = result.getDevice().getName();
-                    if(name == null) {
+                    if (name == null) {
                         ScanRecord record = result.getScanRecord();
                         name = record.getDeviceName();
                     }
-                    if(!emptyName && !(name != null && name.toLowerCase().contains(filterName.toLowerCase())))
+                    if (!emptyName && !(name != null && name.toLowerCase().contains(filterName.toLowerCase())))
                         return;
                     mapScanResult.remove(mac);
                     mapScanResult.put(mac, result);
                 }
-            }else {
+            } else {
                 String name = result.getDevice().getName();
-                if(name == null) {
+                if (name == null) {
                     ScanRecord record = result.getScanRecord();
                     name = record.getDeviceName();
                 }
-                if(!emptyName && !(name != null && name.toLowerCase().contains(filterName.toLowerCase())))
+                if (!emptyName && !(name != null && name.toLowerCase().contains(filterName.toLowerCase())))
                     return;
                 listAddress.add(mac);
                 listSelectState.add(false);
@@ -303,17 +321,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     public void onEventMainThread(ScanResult result) {
-        if(result.getDevice() != null) {
+        if (result.getDevice() != null) {
             addResult(result);
             myAdapter.notifyDataSetChanged();
-        }else {
+        } else {
             progressBar.setVisibility(View.GONE);
         }
     }
 
-    public void onEventMainThread(List<ScanResult> resultList){
-        if(resultList != null && resultList.size()>0 ) {
-            for (int i=0;i<resultList.size();i++) {
+    public void onEventMainThread(List<ScanResult> resultList) {
+        if (resultList != null && resultList.size() > 0) {
+            for (int i = 0; i < resultList.size(); i++) {
                 addResult(resultList.get(i));
             }
             myAdapter.notifyDataSetChanged();
@@ -322,11 +340,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(position != 0) {
-            boolean state = listSelectState.get(position-1);
-            listSelectState.remove(position-1);
-            listSelectState.add(position-1, !state);
-            ((MyAdapter)((HeaderViewListAdapter) (parent.getAdapter())).getWrappedAdapter()).notifyDataSetChanged();
+        if (position != 0) {
+            boolean state = listSelectState.get(position - 1);
+            listSelectState.remove(position - 1);
+            listSelectState.add(position - 1, !state);
+            ((MyAdapter) ((HeaderViewListAdapter) (parent.getAdapter())).getWrappedAdapter()).notifyDataSetChanged();
         }
     }
 
@@ -353,8 +371,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             Holder holder = null;
             final ScanResult result = mapScanResult.get(listAddress.get(position));
             final ScanRecord record = result.getScanRecord();
-            if(convertView == null ) {
-                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main,null);
+            if (convertView == null) {
+                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main, null);
                 holder = new Holder();
                 holder.btnConnect = (Button) convertView.findViewById(R.id.item_btn_connect);
                 holder.deviceAddress = (TextView) convertView.findViewById(R.id.item_deviceaddress);
@@ -364,7 +382,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 holder.tvType = (TextView) convertView.findViewById(R.id.item_type);
                 holder.tv16Bits = (TextView) convertView.findViewById(R.id.item_list_16_bit);
                 holder.tv128Bits = (TextView) convertView.findViewById(R.id.item_list_128_bit);
-                holder.tvFlags = (TextView) convertView.findViewById(R.id.item_Flags );
+                holder.tvFlags = (TextView) convertView.findViewById(R.id.item_Flags);
                 holder.tvLocalName = (TextView) convertView.findViewById(R.id.item_complete_name);
                 holder.tvServiceData = (TextView) convertView.findViewById(R.id.item_service_data);
                 holder.viewLinear = convertView.findViewById(R.id.item_linear);
@@ -375,66 +393,66 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             holder.btnConnect.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(bleService != null) {
+                    if (bleService != null) {
                         scanResult = result;
                         bleService.connect(result.getDevice());
                         String name = result.getDevice().getName();
-                        if(name == null) {
+                        if (name == null) {
                             name = record.getDeviceName();
                         }
-                        dialog.setMessage(getString(R.string.connecting)+" "+name);
-                        if(!dialog.isShowing()) {
+                        dialog.setMessage(getString(R.string.connecting) + " " + name);
+                        if (!dialog.isShowing()) {
                             dialog.show();
                         }
                     }
                 }
             });
-            holder.viewLinear.setVisibility(listSelectState.get(position)?View.VISIBLE:View.GONE);
+            holder.viewLinear.setVisibility(listSelectState.get(position) ? View.VISIBLE : View.GONE);
             holder.deviceAddress.setText(result.getDevice().getAddress());
             String name = result.getDevice().getName();
-            if(name == null) {
+            if (name == null) {
                 name = record.getDeviceName();
             }
             holder.deviceName.setText(name);
-            holder.deviceRssi.setText(result.getRssi()+" dBm");
-            holder.deviceBondState.setText(result.getDevice().getBondState() == BluetoothDevice.BOND_BONDED?getString(R.string.bonded):getString(R.string.no_bonded));
+            holder.deviceRssi.setText(result.getRssi() + " dBm");
+            holder.deviceBondState.setText(result.getDevice().getBondState() == BluetoothDevice.BOND_BONDED ? getString(R.string.bonded) : getString(R.string.no_bonded));
 
-            holder.tvType.setText(getString(R.string.types,getType(result.getDevice().getType())));
-            holder.tvLocalName.setText(getString(R.string.complete_local_name,record.getDeviceName()));
+            holder.tvType.setText(getString(R.string.types, getType(result.getDevice().getType())));
+            holder.tvLocalName.setText(getString(R.string.complete_local_name, record.getDeviceName()));
             StringBuilder builder = new StringBuilder();
             Map<ParcelUuid, byte[]> maps = record.getServiceData();
-            if(maps == null || maps.size() == 0){
-                holder.tvServiceData.setText(getString(R.string.service_data,""));
-            }else {
+            if (maps == null || maps.size() == 0) {
+                holder.tvServiceData.setText(getString(R.string.service_data, ""));
+            } else {
 
-                for (ParcelUuid uuid:maps.keySet()) {
+                for (ParcelUuid uuid : maps.keySet()) {
                     byte[] bs = maps.get(uuid);
                     byte[] bs1 = new byte[]{bs[0], bs[1]};
                     byte[] bs2 = new byte[bs.length - 2];
-                    System.arraycopy(bs,2, bs2,0,bs2.length );
-                    builder.append("UUID:").append(uuid.getUuid().toString().substring(4,8)).append(" Data:").append(bytes2String(bs,1));
+                    System.arraycopy(bs, 2, bs2, 0, bs2.length);
+                    builder.append("UUID:").append(uuid.getUuid().toString().substring(4, 8)).append(" Data:").append(bytes2String(bs, 1));
                 }
                 holder.tvServiceData.setText(getString(R.string.service_data, record.getServiceData() == null ? "" : builder.toString()));
             }
             List<UUID> list16 = record.getList16BitUUIDs();
-            if(list16 != null && list16.size()>0) {
+            if (list16 != null && list16.size() > 0) {
                 builder = new StringBuilder();
-                for (int i=0; i<list16.size();i++){
-                    builder.append(list16.get(i)+(i == list16.size()-1?"":"\r\n"));
+                for (int i = 0; i < list16.size(); i++) {
+                    builder.append(list16.get(i) + (i == list16.size() - 1 ? "" : "\r\n"));
                 }
-                holder.tv16Bits.setText(getString(R.string.list_16_bits,builder.toString()));
-            }else {
-                holder.tv16Bits.setText(getString(R.string.list_16_bits,""));
+                holder.tv16Bits.setText(getString(R.string.list_16_bits, builder.toString()));
+            } else {
+                holder.tv16Bits.setText(getString(R.string.list_16_bits, ""));
             }
             List<UUID> list128 = record.getList128BitUUIDs();
-            if(list128 != null && list128.size()>0) {
+            if (list128 != null && list128.size() > 0) {
                 builder = new StringBuilder();
-                for (int i=0; i<list128.size();i++){
-                    builder.append(list128.get(i)+(i == list128.size()-1?"":"\r\n"));
+                for (int i = 0; i < list128.size(); i++) {
+                    builder.append(list128.get(i) + (i == list128.size() - 1 ? "" : "\r\n"));
                 }
-                holder.tv128Bits.setText(getString(R.string.list_128_bits,builder.toString()));
-            }else {
-                holder.tv128Bits.setText(getString(R.string.list_128_bits,""));
+                holder.tv128Bits.setText(getString(R.string.list_128_bits, builder.toString()));
+            } else {
+                holder.tv128Bits.setText(getString(R.string.list_128_bits, ""));
             }
 
 
@@ -458,25 +476,34 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     /**
-     *
      * @param bytes
      * @param order 倒序 或 正序  -1 1
      * @return
      */
-    public static String bytes2String(byte[] bytes, int order){
-        if(bytes == null || bytes.length == 0)
+    public static String bytes2String(byte[] bytes, int order) {
+        if (bytes == null || bytes.length == 0)
             return "";
         StringBuilder builder = new StringBuilder();
-        if(order == -1) {
+        if (order == -1) {
             builder.append("0x");
-            for (int i=bytes.length-1;i>=0; i--) {
-                builder.append(String.format("%02X",bytes[i]));
+            for (int i = bytes.length - 1; i >= 0; i--) {
+                builder.append(String.format("%02X", bytes[i]));
             }
-        }else if(order == 1){
+        } else if (order == 1) {
             builder.append("0x");
-            for (int i=0;i<bytes.length; i++) {
-                builder.append(String.format("%02X",bytes[i]));
+            for (int i = 0; i < bytes.length; i++) {
+                builder.append(String.format("%02X", bytes[i]));
             }
+        }
+        return builder.toString();
+    }
+
+    public static String bytes2String(byte[] bytes) {
+        if (bytes == null || bytes.length == 0)
+            return "";
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            builder.append(String.format("%02X", bytes[i]));
         }
         return builder.toString();
     }
@@ -496,8 +523,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     public void showMessage(int resid) {
-        dialog.setMessage(getString(resid)+" "+scanResult.getDevice().getName());
-        if(!dialog.isShowing()) {
+        dialog.setMessage(getString(resid) + " " + scanResult.getDevice().getName());
+        if (!dialog.isShowing()) {
             dialog.show();
         }
     }
@@ -507,12 +534,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Intent intentDe = null;
-            if(action.equals(BaseController.ACTION_CONNECTION_STATE)) {
+            if (action.equals(BaseController.ACTION_CONNECTION_STATE)) {
                 int state = intent.getIntExtra(BaseController.EXTRA_CONNECTION_STATE, BaseController.STATE_DISCONNECTED);
                 switch (state) {
                     case BaseController.STATE_CONNECTED:
                         showMessage(R.string.connected);
-                        if(dialog != null && dialog.isShowing()) {
+                        if (dialog != null && dialog.isShowing()) {
                             dialog.dismiss();
                         }
                         intentDe = new Intent(context, DetailActivity.class);
@@ -524,7 +551,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                         break;
                     case BaseController.STATE_DISCONNECTED:
                         showMessage(R.string.disconnected);
-                        if(dialog != null && dialog.isShowing()) {
+                        if (dialog != null && dialog.isShowing()) {
                             dialog.dismiss();
                         }
                         break;
@@ -576,24 +603,28 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
         @Override
         public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-            if(convertView == null) {
-                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main_header,null);
+            if (convertView == null) {
+                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main_header, null);
             }
             TextView tvFilter = (TextView) convertView.findViewById(R.id.item_main_tv_filter_state);
-            tvFilter.setText(filter == null ?"":filter);
+            tvFilter.setText(filter == null ? "" : filter);
             return convertView;
         }
 
         @Override
         public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-            if(convertView == null) {
-                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main_expand_view,null);
+            if (convertView == null) {
+                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_main_expand_view, null);
             }
             final EditText etName = (EditText) convertView.findViewById(R.id.item_main_filter_name);
             final EditText etAddress = (EditText) convertView.findViewById(R.id.item_main_filter_address);
-            etAddress.setText(filterAddress == null?"":filterAddress);
-            etName.setText(filterName == null?"":filterName);
+            final SeekBar seekBar = (SeekBar) convertView.findViewById(R.id.item_main_seekbar);
+            final TextView tvRssi = (TextView) convertView.findViewById(R.id.item_main_rssi);
 
+            seekBar.setProgress(filterRssi*(-1));
+            etAddress.setText(filterAddress == null ? "" : filterAddress);
+            etName.setText(filterName == null ? "" : filterName);
+            tvRssi.setText(filterRssi +" Rssi");
             etAddress.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -625,6 +656,24 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 @Override
                 public void afterTextChanged(Editable s) {
                     tempName = s.toString();
+                }
+            });
+
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    tempRssi = -1*progress;
+                    tvRssi.setText(tempRssi +" Rssi");
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
                 }
             });
 

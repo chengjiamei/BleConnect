@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:background="@color/white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/tv_state"
+        android:text="@string/disconnected"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:orientation="vertical"
+            android:dividerHeight="1dp"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/mc_horizon_lisview"
+                android:layout_width="match_parent"
+                android:layout_height="40dp">
+
+            </android.support.v7.widget.RecyclerView>
+            <View
+                android:background="@color/dark_gray_transparent"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"/>
+            <roc.cjm.bleconnect.views.SlideListView2
+                android:id="@+id/write_list_2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </roc.cjm.bleconnect.views.SlideListView2>
+        </LinearLayout>
+        <View
+            android:background="@color/dark_gray"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+        <ListView
+            android:id="@+id/write_log_listview"
+            android:layout_weight="1"
+            android:divider="@null"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </ListView>
+    </LinearLayout>
+
+</LinearLayout>

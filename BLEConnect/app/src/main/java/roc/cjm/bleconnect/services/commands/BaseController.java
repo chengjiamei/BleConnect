@@ -11,6 +11,9 @@ import android.os.Looper;
 import android.util.Log;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -45,6 +48,7 @@ public abstract class BaseController extends BluetoothGattCallback {
     public int discoverState;
     public BluetoothDevice mDevice;
     private OnControllerListener onControllerListener;
+    private Map<BluetoothGattCharacteristic, byte[]> descriptorState = new HashMap<>();
 
     public void connect(BluetoothDevice device) {
         this.mDevice = device;
@@ -73,7 +77,11 @@ public abstract class BaseController extends BluetoothGattCallback {
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         super.onDescriptorRead(gatt, descriptor, status);
+        byte[] values = descriptor.getValue();
 
+        if (onControllerListener != null) {
+            onControllerListener.onDescriptorRead(gatt, descriptor, status);
+        }
     }
 
     public void readDescriptor(BluetoothGattDescriptor descriptor) {
@@ -90,7 +98,7 @@ public abstract class BaseController extends BluetoothGattCallback {
                 if (characteristic != null) {
                     characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                     characteristic.setValue(value);
-                    setDeviceBusy(mBluetoothGatt);
+                    //setDeviceBusy(mBluetoothGatt);
                     return mBluetoothGatt.writeCharacteristic(characteristic);
                 }
             }
@@ -128,14 +136,34 @@ public abstract class BaseController extends BluetoothGattCallback {
     @Override
     public void onDescriptorWrite(BluetoothGatt gatt, final BluetoothGattDescriptor descriptor, int status) {
         super.onDescriptorWrite(gatt, descriptor, status);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(mBluetoothGatt != null) {
-                    mBluetoothGatt.readDescriptor(descriptor);
+        if(status == BluetoothGatt.GATT_SUCCESS) {
+            BluetoothGattCharacteristic characteristic = descriptor.getCharacteristic();
+            if(characteristic != null) {
+                byte[] tpb = descriptorState.get(characteristic);
+                int notify = descriptor.getCharacteristic().getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY;
+                int indicate = descriptor.getCharacteristic().getProperties() & BluetoothGattCharacteristic.PROPERTY_INDICATE;
+
+                if(tpb[0] == (byte)0x00 && tpb[1] == (byte)0x00) {
+                    descriptorState.remove(characteristic);
+                    descriptorState.put(characteristic,
+                            notify == BluetoothGattCharacteristic.PROPERTY_NOTIFY?BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE:
+                            (indicate == BluetoothGattCharacteristic.PROPERTY_INDICATE?BluetoothGattDescriptor.ENABLE_INDICATION_VALUE:
+                           BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE));
+                }else if((tpb[0] == (byte)0x01 || tpb[0] == (byte)0x02) && tpb[1] == (byte)0x00) {
+                    descriptorState.remove(characteristic);
+                    descriptorState.put(characteristic,BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                 }
             }
-        },100);
+        }
+        if(onControllerListener != null ) {
+            onControllerListener.onDescriptorWrite(gatt, descriptor, status);
+        }
+    }
+
+    @Override
+    public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+        super.onConnectionStateChange(gatt, status, newState);
+        descriptorState.clear();
     }
 
     @Override
@@ -162,6 +190,36 @@ public abstract class BaseController extends BluetoothGattCallback {
         }
     }
 
+    @Override
+    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+        super.onServicesDiscovered(gatt, status);
+        if(status == BluetoothGatt.GATT_SUCCESS) {
+            List<BluetoothGattService> list = gatt.getServices();
+            for (int i=0;i<list.size(); i++) {
+                List<BluetoothGattCharacteristic> listChara = list.get(i).getCharacteristics();
+                if(listChara.size()>0) {
+                    for (int j=0;j<listChara.size();j++) {
+                        BluetoothGattCharacteristic tempChara =  listChara.get(j);
+                        if(descriptorState.get(tempChara) != null) {
+                            descriptorState.remove(tempChara);
+                        }
+                        descriptorState.put(listChara.get(j), new byte[]{0,0});
+                    }
+                }
+
+            }
+        }
+    }
+
+    public byte[] isEnableNotifyIndicate(BluetoothGattCharacteristic characteristic) {
+        if(descriptorState != null) {
+            if(descriptorState.get(characteristic) != null){
+                return descriptorState.get(characteristic);
+            }
+        }
+        return new byte[]{0,0};
+    }
+
     public interface OnControllerListener {
         void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic);
 
@@ -170,6 +228,8 @@ public abstract class BaseController extends BluetoothGattCallback {
         void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status);
 
         void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status);
+
+        void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status);
 
     }
 
@@ -194,6 +254,7 @@ public abstract class BaseController extends BluetoothGattCallback {
 
     private boolean internalEnableIndications(BluetoothGattCharacteristic characteristic, boolean isenable) {
         mBluetoothGatt.setCharacteristicNotification(characteristic, isenable);
+        BluetoothGattService service = characteristic.getService();
         final BluetoothGattDescriptor descriptor = characteristic.getDescriptor(characteristic.getDescriptors().get(0).getUuid());
         if (descriptor != null) {
             descriptor.setValue(isenable ? BluetoothGattDescriptor.ENABLE_INDICATION_VALUE : BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);

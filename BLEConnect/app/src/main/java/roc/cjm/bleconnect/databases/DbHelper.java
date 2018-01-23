@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import roc.cjm.bleconnect.MyApp;
+import roc.cjm.bleconnect.activitys.cmds.databases.DbMcCommand;
+import roc.cjm.bleconnect.activitys.cmds.databases.DbTable;
 
 /**
  * Created by Administrator on 2017/8/26.
@@ -17,7 +19,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private static String dbName = "commanddb.db";
     private static DbHelper sIntances;
-    private static int version = 1;
+    private static int version = 2;
     private SQLiteDatabase db;
 
     public static DbHelper getInstance() {
@@ -47,6 +49,7 @@ public class DbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         this.db = db;
         db.execSQL(DbCommand.CREATE_SQL);
+        db.execSQL(DbTable.CREATE_SQL);
     }
 
     public void replace(String table, String nullColumnHack, ContentValues initialValues){
@@ -57,7 +60,8 @@ public class DbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         this.db = db;
-
+        db.execSQL(DbCommand.CREATE_SQL);
+        db.execSQL(DbTable.CREATE_SQL);
     }
 
     public long insert(String table, ContentValues values) {

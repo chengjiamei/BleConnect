@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,6 +33,9 @@ import java.util.Calendar;
 import java.util.List;
 
 import roc.cjm.bleconnect.R;
+import roc.cjm.bleconnect.activitys.cmds.Config;
+import roc.cjm.bleconnect.activitys.normal.WriteActivity;
+import roc.cjm.bleconnect.activitys.w311test.McWriteActivity;
 import roc.cjm.bleconnect.services.BleService;
 import roc.cjm.bleconnect.services.commands.BaseController;
 
@@ -40,6 +44,8 @@ import roc.cjm.bleconnect.services.commands.BaseController;
  */
 
 public class DetailActivity extends BaseActivity implements View.OnClickListener{
+
+    public static String PROFILE_TYPE = "profile_type";
 
     private String TAG = "DetailActivity";
 
@@ -56,11 +62,23 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
     private TextView tvConnectState;
     private Menu menu;
 
+    private String CONFIG_PATH = "detail_path";
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+
+    private int type;
+
 
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
         setContentView(R.layout.activity_detail);
+
+        sharedPreferences = getSharedPreferences(CONFIG_PATH , MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        type = sharedPreferences.getInt(PROFILE_TYPE , Config.PROFILE_NORMAL);
+
         device = getIntent().getParcelableExtra("device");
         if (device == null) {
             finish();
@@ -83,11 +101,14 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
         filter.addAction(BaseController.ACTION_SERVICE_DISCOVERED);
         filter.addAction(BaseController.ACTION_CONNECTION_STATE);
         filter.addAction(BaseController.ACTION_DISCOVER_STATE);
+        filter.addAction(BleService.ACTION_DESCRIPTORWRITE);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceive, filter);
         if(BleService.getInstance() == null) {
             finish();
             return;
         }
+        listServices = BleService.getInstance().getServiceList();
+        myAdapter.notifyDataSetChanged();
         connectState = BleService.getInstance().getConnectState();
         discoverState = BleService.getInstance().getDiscoverState();
         updateUI();
@@ -133,6 +154,14 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
                     BleService.getInstance().disconnect();
                 }
                 break;
+            case R.id.menu_detail_mcprofile:
+                editor.putInt(PROFILE_TYPE, Config.PROFILE_MC).commit();
+                type = Config.PROFILE_MC;
+                break;
+            case R.id.menu_detail_normal:
+                editor.putInt(PROFILE_TYPE, Config.PROFILE_NORMAL).commit();
+                type = Config.PROFILE_NORMAL;
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -161,6 +190,8 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
                 myAdapter.notifyDataSetChanged();
             } else if (action.equals(BaseController.ACTION_DISCOVER_STATE) ) {
                 discoverState = intent.getIntExtra(BaseController.EXTRA_DISCOVER_STATE,BaseController.STATE_DISCOVERED);
+            } else if (action.equals(BleService.ACTION_DESCRIPTORWRITE)) {
+                myAdapter.notifyDataSetChanged();
             }
             updateUI();
         }
@@ -415,7 +446,9 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
             holder.tvName.setText(strings[0]);
             holder.tvUUID.setText(strings[1]);
             int properties = characteristic.getProperties();
-            holder.imgWrite.setVisibility((properties & BluetoothGattCharacteristic.PROPERTY_WRITE) != BluetoothGattCharacteristic.PROPERTY_WRITE ? View.GONE : View.VISIBLE);
+
+            holder.imgWrite.setVisibility(((properties & BluetoothGattCharacteristic.PROPERTY_WRITE) == BluetoothGattCharacteristic.PROPERTY_WRITE ||
+                    (properties & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) == BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) ? View.VISIBLE : View.GONE);
             holder.imgRead.setVisibility((properties & BluetoothGattCharacteristic.PROPERTY_READ) != BluetoothGattCharacteristic.PROPERTY_READ ? View.GONE : View.VISIBLE);
             holder.imgIndicate.setVisibility((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) != BluetoothGattCharacteristic.PROPERTY_INDICATE?View.GONE:View.VISIBLE);
             holder.imgNotification.setVisibility((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != BluetoothGattCharacteristic.PROPERTY_NOTIFY?View.GONE:View.VISIBLE);
@@ -445,7 +478,7 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
                 String[] sts = getStringByDescriptorUUID(descriptor.getUuid().toString());
                 holder.tvDescriptName.setText(sts[0]);
                 holder.tvDesUUID.setText(sts[1]);
-                byte[] values = descriptor.getValue();
+                byte[] values = BleService.getInstance().getBaseController().isEnableNotifyIndicate(characteristic);
                 if(values != null && values.length == 2){
                     if((values[0]& 0xff) == 0x01 && (values[1] & 0xff) == 0) {
                         holder.imgNotification.setSelected(true);
@@ -493,7 +526,17 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
             holder.imgWrite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(DetailActivity.this, WriteActivity.class);
+                    Intent intent = null;
+                    switch (type) {
+                        case Config.PROFILE_NORMAL:
+                            intent = new Intent(DetailActivity.this, WriteActivity.class);
+                            break;
+                        case Config.PROFILE_MC:
+                            intent = new Intent(DetailActivity.this, McWriteActivity.class);
+                            intent.putExtra(PROFILE_TYPE, type);
+                            break;
+                    }
+
                     intent.putExtra("characteristicuuid", characteristic.getUuid().toString());
                     intent.putExtra("serviceuuid", characteristic.getService().getUuid().toString());
                     intent.putExtra("device" , device);
@@ -511,7 +554,7 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
     }
 
     public boolean isEnable(BluetoothGattDescriptor descriptor) {
-        byte[] values = descriptor.getValue();
+        byte[] values = BleService.getInstance().getBaseController().isEnableNotifyIndicate(descriptor.getCharacteristic());
         if(values != null && values.length == 2){
             if((values[0]& 0xff) == 0x01 && (values[1] & 0xff) == 0) {
                 return true;
@@ -520,9 +563,8 @@ public class DetailActivity extends BaseActivity implements View.OnClickListener
             }else {
                 return false;
             }
-        }else {
-            return false;
         }
+        return false;
     }
 
     class GroupHolder {

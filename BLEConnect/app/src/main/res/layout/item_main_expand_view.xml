@@ -44,7 +44,7 @@
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@id/item_main_img_clear_address"
             android:id="@+id/item_main_filter_address"
-            android:hint="@string/filter_name"
+            android:hint="@string/filter_address"
             android:layout_alignParentLeft="true"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
@@ -55,5 +55,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/item_main_rssi"
+            android:layout_alignParentRight="true"
+            android:text="Rssi"
+            android:layout_marginRight="10dp"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <SeekBar
+            android:layout_margin="10dp"
+            android:max="100"
+            android:progress="80"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@id/item_main_rssi"
+            android:id="@+id/item_main_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
 
 </LinearLayout>

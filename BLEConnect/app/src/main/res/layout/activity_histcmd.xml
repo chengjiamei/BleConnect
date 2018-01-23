@@ -5,11 +5,11 @@
     android:layout_width="match_parent"
     android:background="@color/white"
     android:layout_height="match_parent">
-    <ListView
+    <roc.cjm.bleconnect.views.SlideListView2
         android:id="@+id/hist_listview"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </ListView>
+    </roc.cjm.bleconnect.views.SlideListView2>
 
 </LinearLayout>

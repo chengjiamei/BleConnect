@@ -5,14 +5,17 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.ypy.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,7 +59,6 @@ public class BleService extends Service implements ScanManager.OnScanManagerList
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-
         return new IBleService();
     }
 
@@ -123,6 +125,13 @@ public class BleService extends Service implements ScanManager.OnScanManagerList
         }
     }
 
+    public List<BluetoothGattService> getServiceList() {
+        if (getConnectState() == BaseController.STATE_CONNECTED) {
+           return baseController.mBluetoothGatt.getServices();
+        }
+        return (new ArrayList<>());
+    }
+
     public void setScanTime(long time) {
         if(scanManager != null) {
             scanManager.setScanTime(time);
@@ -135,6 +144,8 @@ public class BleService extends Service implements ScanManager.OnScanManagerList
         }
     }
 
+
+
     public void cancelScan() {
         if(scanManager != null) {
             scanManager.cancelLeScan();
@@ -146,13 +157,15 @@ public class BleService extends Service implements ScanManager.OnScanManagerList
         EventBus.getDefault().post(new ScanResult(null,null,0,0));
     }
 
-    /**
-     * 扫描
-     * @param result
-     */
     @Override
-    public void onScanResult(ScanResult result) {
-        EventBus.getDefault().post(result);
+    public void onScanFailed(int errorCode) {
+
+    }
+
+
+
+    public BaseController getBaseController() {
+        return this.baseController;
     }
 
     /**
@@ -184,10 +197,23 @@ public class BleService extends Service implements ScanManager.OnScanManagerList
         }
     }
 
+    public static String ACTION_DESCRIPTORWRITE = "roc.cjm.bleconnect.services.ACTION_DESCRIPTORWRITE";
+
+    @Override
+    public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+        Intent intent = new Intent(ACTION_DESCRIPTORWRITE);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     @Override
     public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         Log.e(TAG, "onDescriptorRead");
+        if(onBleService != null) {
+
+        }
     }
+
+
 
     //End
 

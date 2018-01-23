@@ -1,5 +1,7 @@
 package roc.cjm.bleconnect.utils;
 
+import android.content.Context;
+
 /**
  * Created by Administrator on 2017/8/28.
  */
@@ -11,5 +13,9 @@ public class Util {
             return true;
         }
         return false;
+    }
+
+    public static int dp2px(Context context, float dpValue) {
+        return (int) (dpValue * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 }
